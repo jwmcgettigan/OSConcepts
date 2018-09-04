@@ -1,13 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/wait.h>
-
-#include <sys/types.h>
-#include <fcntl.h>
-#include <string.h>
-
-#define SIZE 512
 
 int summation(int sum, int num[], int n) {
     for(int i = 0; i < n; i++){sum += num[i];}
