@@ -1,7 +1,7 @@
 #ifndef _SYSFUNC_H_
 #define _SYSFUNC_H_
 
-int addsyscall(void);
+extern int numsyscalls;
 
 // System call handlers
 int sys_chdir(void);

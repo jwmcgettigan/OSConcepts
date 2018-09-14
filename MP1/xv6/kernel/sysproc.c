@@ -9,13 +9,6 @@
 int numsyscalls;
 
 int
-addsyscall(void)
-{
-    numsyscalls++;
-    return 0;
-}
-
-int
 sys_fork(void)
 {
   return fork();
