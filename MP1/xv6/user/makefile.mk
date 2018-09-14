@@ -5,6 +5,7 @@ USER_PROGS := \
 	echo\
 	forktest\
 	grep\
+	howmanysys\
 	init\
 	kill\
 	ln\

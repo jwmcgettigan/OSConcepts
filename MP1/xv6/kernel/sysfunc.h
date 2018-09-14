@@ -1,6 +1,8 @@
 #ifndef _SYSFUNC_H_
 #define _SYSFUNC_H_
 
+int addsyscall(void);
+
 // System call handlers
 int sys_chdir(void);
 int sys_close(void);
@@ -23,5 +25,6 @@ int sys_unlink(void);
 int sys_wait(void);
 int sys_write(void);
 int sys_uptime(void);
+int sys_howmanysys(void);
 
 #endif // _SYSFUNC_H_
