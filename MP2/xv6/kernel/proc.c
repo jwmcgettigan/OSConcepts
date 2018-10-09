@@ -44,6 +44,7 @@ allocproc(void)
   return 0;
 
 found:
+  p->tickets = 1;
   p->state = EMBRYO;
   p->pid = nextpid++;
   release(&ptable.lock);
@@ -156,6 +157,7 @@ fork(void)
 
   pid = np->pid;
   np->state = RUNNABLE;
+  np->tickets = proc->tickets;
   safestrcpy(np->name, proc->name, sizeof(proc->name));
   return pid;
 }
@@ -257,16 +259,33 @@ void
 scheduler(void)
 {
   struct proc *p;
+  //struct pstat *ps;
+  int totaltickets, winner, count;
 
   for(;;){
     // Enable interrupts on this processor.
     sti();
 
-    // Loop over process table looking for process to run.
-    acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    for(p = ptable.proc, totaltickets = 0; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
+      totaltickets += p->tickets;
+    }
+    if(totaltickets == 0)
+      continue;
+    winner = rand(totaltickets);
+
+    acquire(&ptable.lock);
+    // Loop over process table looking for process to run.
+    for(p = ptable.proc, count = 0; p < &ptable.proc[NPROC]; p++){
+      if(p->state != RUNNABLE)
+        continue;
+      count += p->tickets;
+      //if(count >= winner)
+        //cprintf("Winner: %d, Count: %d\n", winner, count);
+      if(count < winner)
+        continue;
+      cprintf("Winner: %d, Count: %d\n", winner, count);
 
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
@@ -274,6 +293,7 @@ scheduler(void)
       proc = p;
       switchuvm(p);
       p->state = RUNNING;
+      p->ticks++;
       swtch(&cpu->scheduler, proc->context);
       switchkvm();
 
@@ -282,7 +302,6 @@ scheduler(void)
       proc = 0;
     }
     release(&ptable.lock);
-
   }
 }
 
@@ -454,69 +473,65 @@ int rand(int lim)
 int
 settickets(int num)
 {
-  if(num < 0)
+  if(num < 1)
     return -1;
-
-  struct proc *p;
-  acquire(&ptable.lock);
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    if(p->state != UNUSED){
-      p->tickets = 1;
-      if(num > 1)
-        p->tickets = rand(num);
-    }
-  }
-  release(&ptable.lock);
+  proc->tickets = num;
   return 0;
 }
 
 int
 getpinfo(int x)
 {
-  struct pstat* p_stat;
-  p_stat = (struct pstat*)x;
-  //--------------------------------------------------------------------------------------------------------
-  struct proc *p, *q;
-  int maxtickets, winner, count;
+  struct proc *p;
+  struct pstat* ps = (struct pstat*)x;
+  if(ps == NULL)
+    return -1;
 
+  int i;
+  // lock the process table
   acquire(&ptable.lock);
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    p_stat->pid[p->pid] = p->pid;
-    p_stat->tickets[p->pid] = p->tickets;
-    if(p->state != UNUSED){
-      p_stat->inuse[p->pid] = 1;
-      for(q = ptable.proc, maxtickets = 0; q < &ptable.proc[NPROC]; q++){
-        maxtickets += q->tickets;
-      }
-      winner = rand(maxtickets);
-      cprintf("Winner:%d\n", winner);
-      for(q = ptable.proc, count = 0; q < &ptable.proc[NPROC]; q++){
-        if(q->state != UNUSED){
-          count += q->tickets;
-          cprintf("Count:%d\n", count);
-          if(count >= winner){
-            p_stat->ticks[q->pid]++;
-            break;
-          }
-        }
-      }
-    }else
-      p_stat->inuse[p->pid] = 0;
+  for(p = ptable.proc, i = 0; p < &ptable.proc[NPROC]; p++, i++){
+    ps->inuse[i] = ((p->state) == UNUSED)?0:1;
+    ps->pid[i] = p->pid;
+    ps->tickets[i] = p->tickets;
+    ps->ticks[i] = p->ticks;
   }
   release(&ptable.lock);
-  //--------------------------------------------------------------------------------------------------------
-  /*
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    int pid = p->pid;
-    p_stat->pid[pid] = pid;
-    p_stat->ticks[pid] = p->ticks;
-
-    if(p->state != UNUSED)
-      p_stat->inuse[pid] = 1;
-    else
-      p_stat->inuse[pid] = 0;
-
-    //p_stat->tickets[pid] = p->tickets;
-  }*/
+  // RETURN ALL THAT ARE NOT UNUSED
   return 0;
 }
+
+/*
+struct pstat* p_stat;
+p_stat = (struct pstat*)x;
+
+//--------------------------------------------------------------------------------------------------------
+struct proc *p, *q;
+int totaltickets, winner, count;
+acquire(&ptable.lock);
+for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+  p_stat->pid[p->pid] = p->pid;
+  p_stat->tickets[p->pid] = p->tickets;
+  if(p->state != UNUSED){
+    p_stat->inuse[p->pid] = 1;
+    for(q = ptable.proc, totaltickets = 0; q < &ptable.proc[NPROC]; q++){
+      totaltickets += q->tickets;
+    }
+    winner = rand(totaltickets);
+    cprintf("Winner:%d | ", winner);
+    for(q = ptable.proc, count = 0; q < &ptable.proc[NPROC]; q++){
+      if(q->state != UNUSED){
+        count += q->tickets;
+        cprintf("Count:%d, ", count);
+        if(count >= winner){
+          cprintf("\n");
+          p_stat->ticks[q->pid]++;
+          break;
+        }
+      }
+    }
+  }else
+    p_stat->inuse[p->pid] = 0;
+}
+release(&ptable.lock);*/
+//--------------------------------------------------------------------------------------------------------

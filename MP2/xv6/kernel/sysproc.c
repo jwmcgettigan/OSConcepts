@@ -112,5 +112,6 @@ sys_getpinfo(void)
   int x;
   if(argint(0, &x) < 0)
     return -1;
+  // assign all proc to pstat
   return getpinfo(x);
 }
