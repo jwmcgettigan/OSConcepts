@@ -4,6 +4,7 @@ USER_PROGS := \
 	cat\
 	echo\
 	forktest\
+	getpinfo\
 	grep\
 	howmanysys\
 	init\
@@ -103,4 +104,3 @@ user/%.d: user/%.c
 user/%.d: user/%.S
 	$(CC) $(CPPFLAGS) $(USER_CPPFLAGS) $(ASFLAGS) $(USER_ASFLAGS) \
 		-M -MG $< -MF $@ -MT $@ -MT $(<:.S=.o)
-

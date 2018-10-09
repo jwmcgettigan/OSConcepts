@@ -94,5 +94,23 @@ sys_uptime(void)
 int
 sys_howmanysys(void)
 {
-    return numsyscalls;
+  return numsyscalls;
+}
+
+int
+sys_settickets(void)
+{
+  int num;
+  if(argint(0, &num) < 0)
+    return -1;
+  return settickets(num);
+}
+
+int
+sys_getpinfo(void)
+{
+  int x;
+  if(argint(0, &x) < 0)
+    return -1;
+  return getpinfo(x);
 }

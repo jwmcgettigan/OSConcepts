@@ -5,6 +5,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "pstat.h"
 
 struct {
   struct spinlock lock;
@@ -53,11 +54,11 @@ found:
     return 0;
   }
   sp = p->kstack + KSTACKSIZE;
-  
+
   // Leave room for trap frame.
   sp -= sizeof *p->tf;
   p->tf = (struct trapframe*)sp;
-  
+
   // Set up new context to start executing at forkret,
   // which returns to trapret.
   sp -= 4;
@@ -77,7 +78,7 @@ userinit(void)
 {
   struct proc *p;
   extern char _binary_initcode_start[], _binary_initcode_size[];
-  
+
   p = allocproc();
   acquire(&ptable.lock);
   initproc = p;
@@ -107,7 +108,7 @@ int
 growproc(int n)
 {
   uint sz;
-  
+
   sz = proc->sz;
   if(n > 0){
     if((sz = allocuvm(proc->pgdir, sz, sz + n)) == 0)
@@ -152,7 +153,7 @@ fork(void)
     if(proc->ofile[i])
       np->ofile[i] = filedup(proc->ofile[i]);
   np->cwd = idup(proc->cwd);
- 
+
   pid = np->pid;
   np->state = RUNNABLE;
   safestrcpy(np->name, proc->name, sizeof(proc->name));
@@ -322,7 +323,7 @@ forkret(void)
 {
   // Still holding ptable.lock from scheduler.
   release(&ptable.lock);
-  
+
   // Return to "caller", actually trapret (see allocproc).
 }
 
@@ -425,7 +426,7 @@ procdump(void)
   struct proc *p;
   char *state;
   uint pc[10];
-  
+
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->state == UNUSED)
       continue;
@@ -443,4 +444,79 @@ procdump(void)
   }
 }
 
+int rand(int lim)
+{
+  static long a = 3;
+  a = (((a * 214013L + 2531011L) >> 16) & 32767);
+  return ((a % lim) + 1);
+}
 
+int
+settickets(int num)
+{
+  if(num < 0)
+    return -1;
+
+  struct proc *p;
+  acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->state != UNUSED){
+      p->tickets = 1;
+      if(num > 1)
+        p->tickets = rand(num);
+    }
+  }
+  release(&ptable.lock);
+  return 0;
+}
+
+int
+getpinfo(int x)
+{
+  struct pstat* p_stat;
+  p_stat = (struct pstat*)x;
+  //--------------------------------------------------------------------------------------------------------
+  struct proc *p, *q;
+  int maxtickets, winner, count;
+
+  acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    p_stat->pid[p->pid] = p->pid;
+    p_stat->tickets[p->pid] = p->tickets;
+    if(p->state != UNUSED){
+      p_stat->inuse[p->pid] = 1;
+      for(q = ptable.proc, maxtickets = 0; q < &ptable.proc[NPROC]; q++){
+        maxtickets += q->tickets;
+      }
+      winner = rand(maxtickets);
+      cprintf("Winner:%d\n", winner);
+      for(q = ptable.proc, count = 0; q < &ptable.proc[NPROC]; q++){
+        if(q->state != UNUSED){
+          count += q->tickets;
+          cprintf("Count:%d\n", count);
+          if(count >= winner){
+            p_stat->ticks[q->pid]++;
+            break;
+          }
+        }
+      }
+    }else
+      p_stat->inuse[p->pid] = 0;
+  }
+  release(&ptable.lock);
+  //--------------------------------------------------------------------------------------------------------
+  /*
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    int pid = p->pid;
+    p_stat->pid[pid] = pid;
+    p_stat->ticks[pid] = p->ticks;
+
+    if(p->state != UNUSED)
+      p_stat->inuse[pid] = 1;
+    else
+      p_stat->inuse[pid] = 0;
+
+    //p_stat->tickets[pid] = p->tickets;
+  }*/
+  return 0;
+}

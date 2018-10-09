@@ -109,6 +109,8 @@ void            userinit(void);
 int             wait(void);
 void            wakeup(void*);
 void            yield(void);
+int             settickets(int);
+int             getpinfo(int);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
