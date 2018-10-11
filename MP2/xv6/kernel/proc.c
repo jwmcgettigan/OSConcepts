@@ -280,12 +280,11 @@ scheduler(void)
     for(p = ptable.proc, count = 0; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
+
       count += p->tickets;
-      //if(count >= winner)
-        //cprintf("Winner: %d, Count: %d\n", winner, count);
       if(count < winner)
         continue;
-      cprintf("Winner: %d, Count: %d\n", winner, count);
+      //cprintf("Winner: %d, Count: %d\n", winner, count);
 
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
