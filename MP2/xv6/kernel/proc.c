@@ -259,7 +259,6 @@ void
 scheduler(void)
 {
   struct proc *p;
-  //struct pstat *ps;
   int totaltickets, winner, count;
 
   for(;;){
@@ -284,7 +283,6 @@ scheduler(void)
       count += p->tickets;
       if(count < winner)
         continue;
-      //cprintf("Winner: %d, Count: %d\n", winner, count);
 
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
@@ -462,13 +460,6 @@ procdump(void)
   }
 }
 
-int rand(int lim)
-{
-  static long a = 3;
-  a = (((a * 214013L + 2531011L) >> 16) & 32767);
-  return ((a % lim) + 1);
-}
-
 int
 settickets(int num)
 {
@@ -500,37 +491,9 @@ getpinfo(int x)
   return 0;
 }
 
-/*
-struct pstat* p_stat;
-p_stat = (struct pstat*)x;
-
-//--------------------------------------------------------------------------------------------------------
-struct proc *p, *q;
-int totaltickets, winner, count;
-acquire(&ptable.lock);
-for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-  p_stat->pid[p->pid] = p->pid;
-  p_stat->tickets[p->pid] = p->tickets;
-  if(p->state != UNUSED){
-    p_stat->inuse[p->pid] = 1;
-    for(q = ptable.proc, totaltickets = 0; q < &ptable.proc[NPROC]; q++){
-      totaltickets += q->tickets;
-    }
-    winner = rand(totaltickets);
-    cprintf("Winner:%d | ", winner);
-    for(q = ptable.proc, count = 0; q < &ptable.proc[NPROC]; q++){
-      if(q->state != UNUSED){
-        count += q->tickets;
-        cprintf("Count:%d, ", count);
-        if(count >= winner){
-          cprintf("\n");
-          p_stat->ticks[q->pid]++;
-          break;
-        }
-      }
-    }
-  }else
-    p_stat->inuse[p->pid] = 0;
+int rand(int lim)
+{
+  static long a = 3;
+  a = (((a * 214013L + 2531011L) >> 16) & 32767);
+  return ((a % lim) + 1);
 }
-release(&ptable.lock);*/
-//--------------------------------------------------------------------------------------------------------

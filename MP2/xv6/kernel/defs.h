@@ -111,6 +111,7 @@ void            wakeup(void*);
 void            yield(void);
 int             settickets(int);
 int             getpinfo(int);
+int             rand(int);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
@@ -170,8 +171,6 @@ pde_t*          copyuvm(pde_t*, uint);
 void            switchuvm(struct proc*);
 void            switchkvm(void);
 int             copyout(pde_t*, uint, void*, uint);
-
-int             rand(int);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
