@@ -447,8 +447,18 @@ int clone(void (*fcn)(void*), void *arg, void *stack){
   int i, pid;
   struct proc *np;
 
+  if ((uint)stack % PGSIZE != 0 || (uint)stack + PGSIZE > (proc->sz))
+	return -1;
+
   if((np = allocproc()) == 0)
     return -1;
+
+  if((np->pgdir = copyuvm(proc->pgdir, proc->sz)) == 0){    
+    kfree(np->kstack);
+    np->kstack = 0;
+    np->state = UNUSED;
+    return -1;
+  }
 
   np->pgdir = proc->pgdir;
   np->sz = proc->sz;
@@ -457,10 +467,8 @@ int clone(void (*fcn)(void*), void *arg, void *stack){
   np->tf->eax = 0;
   np->myStack = stack;
 
-  *((uint*)(stack + PGSIZE - sizeof(uint))) = (uint)arg;
-  *((uint*)(stack + PGSIZE - 2 * sizeof(uint))) = 0xffffffff;
-  np->tf->esp = (uint)stack + PGSIZE - 2 * sizeof(uint);
   np->tf->eip = (uint)fcn;
+  np->tf->esp = (uint)stack;
 
   for(i = 0; i < NOFILE; i++){
     if(proc->ofile[i])
