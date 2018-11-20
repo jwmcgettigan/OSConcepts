@@ -2,12 +2,14 @@
 # user programs
 USER_PROGS := \
 	cat\
+	clone\
 	echo\
 	forktest\
 	getpinfo\
 	grep\
 	howmanysys\
 	init\
+	join\
 	kill\
 	ln\
 	ls\
@@ -16,6 +18,7 @@ USER_PROGS := \
 	sh\
 	stressfs\
 	tester\
+	threadlibrary\
 	usertests\
 	wc\
 	zombie

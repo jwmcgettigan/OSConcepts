@@ -28,5 +28,8 @@ int sys_uptime(void);
 int sys_howmanysys(void);
 int sys_settickets(void);
 int sys_getpinfo(void);
+int sys_clone(void);
+int sys_join(void);
+int sys_threadlibrary(void);
 
 #endif // _SYSFUNC_H_

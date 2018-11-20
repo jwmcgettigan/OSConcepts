@@ -112,6 +112,8 @@ void            yield(void);
 int             settickets(int);
 int             getpinfo(int);
 int             rand(int);
+int             clone(void (*fcn)(void*), void *arg, void *stack);
+int             join(void** stack);
 
 // swtch.S
 void            swtch(struct context**, struct context*);

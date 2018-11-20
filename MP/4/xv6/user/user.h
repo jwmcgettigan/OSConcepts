@@ -3,6 +3,7 @@
 
 struct stat;
 struct pstat;
+typedef uint lock_t;
 
 // system calls
 int fork(void);
@@ -29,6 +30,9 @@ int uptime(void);
 int howmanysys(void);
 int settickets(int);
 int getpinfo(struct pstat*);
+int clone(void (*fcn)(void*), void *arg, void *stack);
+int join(void** stack);
+int threadlibrary(void);
 
 // user library functions (ulib.c)
 int stat(char*, struct stat*);
@@ -43,5 +47,11 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
+
+int thread_create(void (*)(void*), void*);
+int thread_join(void);
+void lock_init(volatile lock_t*);
+void lock_acquire(volatile lock_t*);
+void lock_release(volatile lock_t*);
 
 #endif // _USER_H_
