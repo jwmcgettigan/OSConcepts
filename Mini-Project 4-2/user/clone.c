@@ -21,11 +21,11 @@ int main(int argc, char *argv[]){
 	if((uint)stack % PGSIZE)
 	    stack = stack + (4096 - (uint)stack % PGSIZE);
 	int clone_pid = clone(worker, 0, stack);
-	printf(1, "Clone PID: %d\n", clone_pid);
+	//printf(1, "Clone PID: %d\n", clone_pid);
 	assert(clone_pid > 0);
-	printf(1, "global: %d\n", global);
+	//printf(1, "global: %d\n", global);
 	while(global != 5);
-	printf(1, "global: %d\n", global);
+	//printf(1, "global: %d\n", global);
 	printf(1, "TEST PASSED\n");
 	exit();
 }

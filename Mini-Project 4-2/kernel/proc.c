@@ -443,6 +443,11 @@ procdump(void)
   }
 }
 
+ /**((uint*)(stack + PGSIZE - sizeof(uint))) = (uint)arg;
+  *((uint*)(stack + PGSIZE - 2 * sizeof(uint))) = 0xffffffff;
+  np->tf->esp = (uint)stack + PGSIZE - 2 * sizeof(uint);
+  np->tf->eip = (uint)fcn;*/
+
 int clone(void (*fcn)(void*), void *arg, void *stack){
   int i, pid;
   struct proc *np;
@@ -467,8 +472,17 @@ int clone(void (*fcn)(void*), void *arg, void *stack){
   np->tf->eax = 0;
   np->myStack = stack;
 
-  np->tf->eip = (uint)fcn;
-  np->tf->esp = (uint)stack;
+  void * stackArg, *stackRet;
+  stackRet = stack + PGSIZE - 2 * sizeof(void *);
+  *(uint*)stackRet = 0xffffffff;
+
+  stackArg = stack + PGSIZE - sizeof(void *);
+  *(uint*)stackArg = (uint)arg;
+	
+  np->tf->esp = (int) stack;
+  np->tf->esp += PGSIZE - 2 * sizeof(void*) ;
+  np->tf->ebp = np->tf->esp;
+  np->tf->eip = (int) fcn;	
 
   for(i = 0; i < NOFILE; i++){
     if(proc->ofile[i])
